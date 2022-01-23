@@ -410,6 +410,7 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 		other_free -= nr_rbin_free;
 		other_file -= nr_rbin_file;
 	}
+#endif
 
 	if (!current_is_kswapd() && is_mem_boost_high() &&
 			lowmem_direct_minfree_size && lowmem_direct_adj_size) {
