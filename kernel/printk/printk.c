@@ -1477,7 +1477,7 @@ static int syslog_print_all(char __user *buf, int size, bool clear, bool knox)
 		}
 		/* } SecProductFeature_KNOX.SEC_PRODUCT_FEATURE_KNOX_SUPPORT_MDM */
 
-		prev = 0;
+		//prev = 0;
 		while (seq < log_next_seq) {
 			struct printk_log *msg = log_from_idx(idx);
 
@@ -1497,7 +1497,7 @@ static int syslog_print_all(char __user *buf, int size, bool clear, bool knox)
 		}
 		/* } SecProductFeature_KNOX.SEC_PRODUCT_FEATURE_KNOX_SUPPORT_MDM */
 
-		prev = 0;
+		//prev = 0;
 		while (len > size && seq < log_next_seq) {
 			struct printk_log *msg = log_from_idx(idx);
 
@@ -2098,7 +2098,7 @@ static void sec_log_add(const struct printk_log *msg)
 	if (!sec_log_buf || !sec_log_idx_ptr)
 		return;
 
-	size = msg_print_text(msg, prev_flag, true, tmp,
+	size = msg_print_text(msg, true, tmp,
 			      LOG_BUF_SIZE);
 	prev_flag = msg->flags;
 	for (i = 0; i < size; i++)
