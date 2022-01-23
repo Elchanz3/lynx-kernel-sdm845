@@ -1600,8 +1600,7 @@ static void android_work(struct work_struct *data)
 #ifdef CONFIG_USB_NOTIFY_PROC_LOG
 		store_usblog_notify(NOTIFY_USBSTATE, configured[0], NULL);
 #endif
-		pr_info("usb: %s sent uevent %s\n", __func__, configured[0]);
-		place_marker("M - USB enumeration complete");
+		pr_info("%s: sent uevent %s\n", __func__, configured[0]);
 		uevent_sent = true;
 	}
 

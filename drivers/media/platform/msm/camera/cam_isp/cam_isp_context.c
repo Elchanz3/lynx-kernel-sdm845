@@ -1535,8 +1535,6 @@ static int __cam_isp_ctx_rdi_only_sof_in_bubble_state(
 
 	ctx_isp->frame_id++;
 	ctx_isp->sof_timestamp_val = sof_event_data->timestamp;
-	ctx_isp->boot_timestamp = sof_event_data->boot_time;
-	atomic_inc(&ctx_isp->bubble_sof_count);
 	CAM_DBG(CAM_ISP, "frame id: %lld time stamp:0x%llx",
 		ctx_isp->frame_id, ctx_isp->sof_timestamp_val);
 
