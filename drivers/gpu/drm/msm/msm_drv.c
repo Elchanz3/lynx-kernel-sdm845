@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018, 2020 The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -1328,21 +1328,22 @@ static int msm_ioctl_register_event(struct drm_device *dev, void *data,
 		spin_lock_irqsave(&dev->event_lock, flag);
 		list_add_tail(&client->base.link, &priv->client_event_list);
 		spin_unlock_irqrestore(&dev->event_lock, flag);
- 		return 0;
+		return 0;
 	}
- 
- 	ret = msm_register_event(dev, req_event, file, true);
- 	if (ret) {
- 		DRM_ERROR("failed to enable event %x object %x object id %d\n",
- 			req_event->event, req_event->object_type,
+
+	ret = msm_register_event(dev, req_event, file, true);
+	if (ret) {
+		DRM_ERROR("failed to enable event %x object %x object id %d\n",
+			req_event->event, req_event->object_type,
 			req_event->object_id);
 		kfree(client);
 	} else {
 		/* Add current client to list */
- 		spin_lock_irqsave(&dev->event_lock, flag);
+		spin_lock_irqsave(&dev->event_lock, flag);
 		list_add_tail(&client->base.link, &priv->client_event_list);
- 		spin_unlock_irqrestore(&dev->event_lock, flag);
- 	}
+		spin_unlock_irqrestore(&dev->event_lock, flag);
+	}
+
 	return ret;
 }
 
