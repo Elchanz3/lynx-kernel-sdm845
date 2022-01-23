@@ -100,6 +100,9 @@
 #define EUD_INT_VBUS		BIT(2)
 #define EUD_INT_CHGR		BIT(3)
 #define EUD_INT_SAFE_MODE	BIT(4)
+/* DEBUG_CTRL4 register bits  */
+#define FORCED_UTMI_DPPULLDOWN	BIT(2)
+#define FORCED_UTMI_DMPULLDOWN	BIT(3)
 
 enum qusb_phy_reg {
 	PORT_TUNE1,
