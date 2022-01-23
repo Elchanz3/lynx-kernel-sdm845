@@ -1,4 +1,4 @@
-/* Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -32,6 +32,16 @@
  * worst case DUAL IFE use case plus some margin.
  */
 #define CAM_ISP_CTX_CFG_MAX                     22
+
+/* Maximum allowed sof count in rdi only bubble state
+ * till buf_done is received for bubble req_id.
+ */
+#define CAM_ISP_CTX_BUBBLE_SOF_COUNT_MAX        3
+
+/*
+ * Maximum entries in state monitoring array for error logging
+ */
+#define CAM_ISP_CTX_STATE_MONITOR_MAX_ENTRIES   20
 
 /* forward declaration */
 struct cam_isp_context;
@@ -123,6 +133,8 @@ struct cam_isp_ctx_req {
  * @cam_isp_ctx_state_monitor: State monitoring array
  * @rdi_only_context:          Get context type information.
  *                             true, if context is rdi only context
+ * @bubble_sof_count:          Atomic variable to check if ctx has any sof's
+ *                             while processing bubble
  *
  */
 struct cam_isp_context {
@@ -146,6 +158,7 @@ struct cam_isp_context {
 	uint32_t                         frame_skip_count;
 	bool                             rdi_only_context;
 	bool                             dual_ife_usage;
+	atomic_t                         bubble_sof_count;
 };
 
 /**
