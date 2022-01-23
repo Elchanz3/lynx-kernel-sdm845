@@ -536,6 +536,7 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 #endif
 
 		task_lock(selected);
+		get_task_struct(selected);
 		send_sig(SIGKILL, selected, 0);
 		if (selected->mm) {
 			task_set_lmk_waiting(selected);
