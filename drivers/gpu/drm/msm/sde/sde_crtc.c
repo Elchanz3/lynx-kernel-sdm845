@@ -2367,7 +2367,6 @@ void sde_crtc_complete_flip(struct drm_crtc *crtc,
 
 	spin_lock_irqsave(&dev->event_lock, flags);
 	event = sde_crtc->event;
-
 	if (!event)
 		goto end;
 
@@ -3344,7 +3343,10 @@ static void sde_crtc_atomic_flush(struct drm_crtc *crtc,
 	event_thread = &priv->event_thread[crtc->index];
 	idle_time = sde_crtc_get_property(cstate, CRTC_PROP_IDLE_TIMEOUT);
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 7b5c6a065b78899d71715cc4be758df35cf7bebd
 	/*
 	 * If no mixers has been allocated in sde_crtc_atomic_check(),
 	 * it means we are trying to flush a CRTC whose state is disabled:
@@ -3791,6 +3793,7 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 	bool is_error, reset_req;
 	unsigned long flags;
 	enum sde_crtc_idle_pc_state idle_pc_state;
+	unsigned long flags;
 
 	if (!crtc) {
 		SDE_ERROR("invalid argument\n");
@@ -3900,6 +3903,15 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 	/* store the event after frame trigger */
 	if (sde_crtc->event) {
     	WARN_ON(sde_crtc->event);
+	} else {
+		spin_lock_irqsave(&dev->event_lock, flags);
+		sde_crtc->event = crtc->state->event;
+		spin_unlock_irqrestore(&dev->event_lock, flags);
+	}
+
+	/* store the event after frame trigger */
+	if (sde_crtc->event) {
+		WARN_ON(sde_crtc->event);
 	} else {
 		spin_lock_irqsave(&dev->event_lock, flags);
 		sde_crtc->event = crtc->state->event;
