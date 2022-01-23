@@ -47,6 +47,17 @@ config SAMSUNG_FREECESS
 	default n
 	help
 	  thraw frozen process when recv sig.
+	  
+config ANDROID_LMK_NOTIFY_TRIGGER
+	bool "Android Low Memory Killer Notify Trigger"
+	depends on ANDROID_LOW_MEMORY_KILLER
+	default n
+	---help---
+	Create node "/sys/kernel/mm/lowmemkiller/notify_trigger_active",
+	on which an userspace application can poll for notification when
+	the number of free physical memory pages in the system falls below
+	a set threshold. The threshold is set by the new module parameter
+	"/sys/module/lowmemorykiller/parameters/notify_trigger".
 
 source "drivers/staging/android/ion/Kconfig"
 
