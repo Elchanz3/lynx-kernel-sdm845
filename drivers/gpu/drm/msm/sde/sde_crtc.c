@@ -3343,10 +3343,6 @@ static void sde_crtc_atomic_flush(struct drm_crtc *crtc,
 	event_thread = &priv->event_thread[crtc->index];
 	idle_time = sde_crtc_get_property(cstate, CRTC_PROP_IDLE_TIMEOUT);
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 7b5c6a065b78899d71715cc4be758df35cf7bebd
 	/*
 	 * If no mixers has been allocated in sde_crtc_atomic_check(),
 	 * it means we are trying to flush a CRTC whose state is disabled:
@@ -3791,7 +3787,6 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 	struct sde_kms *sde_kms;
 	struct sde_crtc_state *cstate;
 	bool is_error, reset_req;
-	unsigned long flags;
 	enum sde_crtc_idle_pc_state idle_pc_state;
 	unsigned long flags;
 

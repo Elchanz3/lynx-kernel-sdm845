@@ -2126,8 +2126,6 @@ bad_fork_cancel_cgroup:
 	spin_unlock(&current->sighand->siglock);
 	write_unlock_irq(&tasklist_lock);
 	cgroup_cancel_fork(p);
-	task_integrity_cleanup(p);
-bad_fork_free_pid:
 bad_fork_cgroup_threadgroup_change_end:
 	threadgroup_change_end(current);
 bad_fork_put_pidfd:

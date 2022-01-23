@@ -100,41 +100,6 @@ struct cam_isp_ctx_req {
 };
 
 /**
- * struct cam_isp_context  - ISP context object
- *
- * @base:                  Common context object pointer
- * @frame_id:              Frame id tracking for the isp context
- * @substate_actiavted:    Current substate for the activated state.
- * @substate_machine:      ISP substate machine for external interface
- * @substate_machine_irq:  ISP substate machine for irq handling
- * @req_base:              Common request object storage
- * @req_isp:               ISP private request object storage
- * @hw_ctx:                HW object returned by the acquire device command
- * @sof_timestamp_val:     Captured time stamp value at sof hw event
- * @active_req_cnt:        Counter for the active request
- * @reported_req_id:       Last reported request id
- * @subscribe_event:       The irq event mask that CRM subscribes to, IFE will
- *                         invoke CRM cb at those event.
- * @last_applied_req_id:   Last applied request id
- * struct cam_isp_context_state_monitor - ISP context state
- *                                        monitoring for
- *                                        debug purposes
- *
- *@curr_state:          Current sub state that received req
- *@req_type:            Event type of incoming req
- *@req_id:              Request id
- *@evt_time_stamp       Current time stamp
- *
- */
-struct cam_isp_context_state_monitor {
-	enum cam_isp_ctx_activated_substate  curr_state;
-	enum cam_isp_state_change_trigger    trigger;
-	uint32_t                             req_id;
-	int64_t                              frame_id;
-	uint64_t                             evt_time_stamp;
-};
-
-/**
  * struct cam_isp_context   -  ISP context object
  *
  * @base:                      Common context object pointer
