@@ -2269,8 +2269,7 @@ static inline u32 open_file_to_av(struct file *file)
 
 static int selinux_binder_set_context_mgr(const struct cred *mgr)
 {
-	u32 mysid = current_sid();
-	u32 mgrsid = task_sid(mgr);
+
 #ifdef CONFIG_RKP_KDP
 	int rc;
 
@@ -2307,14 +2306,13 @@ static int selinux_binder_transaction(const struct cred *from,
 static int selinux_binder_transfer_binder(const struct cred *from,
 					  const struct cred *to)
 {
-	u32 fromsid = task_sid(from);
-	u32 tosid = task_sid(to);
 #ifdef CONFIG_RKP_KDP
 	int rc;
 
 	if ((rc = security_integrity_current()))
 		return rc;
 #endif  /* CONFIG_RKP_KDP */
+
 	return avc_has_perm(cred_sid(from), cred_sid(to),
 			    SECCLASS_BINDER, BINDER__TRANSFER,
 			    NULL);

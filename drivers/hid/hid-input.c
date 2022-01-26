@@ -1097,7 +1097,8 @@ mapped:
 		 * of the usage is desired.
 		 */
 		return;
-
+	}
+	
 	set_bit(usage->type, input->evbit);
 
 	while (usage->code <= max && test_and_set_bit(usage->code, bit))

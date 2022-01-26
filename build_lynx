@@ -8,7 +8,7 @@ PARENT_DIR=`readlink -f ${DIR}/..`;
 export PLATFORM_VERSION=10
 export ANDROID_MAJOR_VERSION=q
 BUILD_CROSS_COMPILE=$PARENT_DIR/aarch64-linux-android-4.9/bin/aarch64-linux-android-
-KERNEL_MAKE_ENV="LOCALVERSION=-5.0"
+KERNEL_MAKE_ENV="LOCALVERSION=-5.1"
 
 # Color
 ON_BLUE=`echo -e "\033[46m"`	# On Blue
@@ -49,7 +49,7 @@ variant(){
 toolchain(){
   if [ ! -d $PARENT_DIR/aarch64-linux-android-4.9 ]; then
     pause 'clone Toolchain aarch64-linux-android-4.9 cross compiler'
-    git clone --branch android-9.0.0_r59 https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9 $PARENT_DIR/aarch64-linux-android-4.9
+    git clone --branch android-10.0.0_r40 https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9 $PARENT_DIR/aarch64-linux-android-4.9
     . $DIR/build_menu
   fi
 }
@@ -67,8 +67,8 @@ build(){
   variant
   echo "${GREEN}***** Compiling kernel *****${STD}"
   [ ! -d "out" ] && mkdir out
-  make -j$(nproc) -C $(pwd) O=$(pwd)/out $KERNEL_MAKE_ENV ARCH=arm64 CROSS_COMPILE=$BUILD_CROSS_COMPILE KCFLAGS=-mno-android lynx_${VARIANT}_defconfig
-  make -j$(nproc) -C $(pwd) O=$(pwd)/out $KERNEL_MAKE_ENV ARCH=arm64 CROSS_COMPILE=$BUILD_CROSS_COMPILE KCFLAGS=-mno-android
+  make -j$(nproc) -C $(pwd) O=$(pwd)/out $KERNEL_MAKE_ENV CC=clang CLANG_TRIPLE=aarch64-linux-gnu- ARCH=arm64 CROSS_COMPILE=$BUILD_CROSS_COMPILE lynx_${VARIANT}_defconfig
+  make -j$(nproc) -C $(pwd) O=$(pwd)/out $KERNEL_MAKE_ENV CC=clang CLANG_TRIPLE=aarch64-linux-gnu- ARCH=arm64 CROSS_COMPILE=$BUILD_CROSS_COMPILE
 
   [ -e out/arch/arm64/boot/Image.gz ] && cp out/arch/arm64/boot/Image.gz $(pwd)/out/Image.gz
   if [ -e out/arch/arm64/boot/Image.gz-dtb ]; then

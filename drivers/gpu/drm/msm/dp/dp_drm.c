@@ -974,6 +974,8 @@ enum drm_mode_status dp_connector_mode_valid(struct drm_connector *connector,
 {
 	struct dp_display *dp_disp;
 	struct dp_debug *debug;
+	u32 pclk = 0;
+	u32 rate_ratio = RGB_24BPP_TMDS_CHAR_RATE_RATIO;
 #ifdef CONFIG_SEC_DISPLAYPORT
 	enum drm_mode_status ret = MODE_OK;
 #endif
@@ -998,7 +1000,7 @@ enum drm_mode_status dp_connector_mode_valid(struct drm_connector *connector,
 			mode->picture_aspect_ratio != debug->aspect_ratio))
 		return MODE_BAD;
 
-	return dp_disp->validate_mode(dp_disp, mode->clock);
+	return dp_disp->validate_mode(dp_disp, pclk, mode->flags);
 #else
 	if (mode->clock > dp_disp->max_pclk_khz) {
 		ret = MODE_BAD;
@@ -1013,7 +1015,7 @@ enum drm_mode_status dp_connector_mode_valid(struct drm_connector *connector,
 		goto end;
 	}
 
-	ret = dp_disp->validate_mode(dp_disp, mode->clock);
+	ret = dp_disp->validate_mode(dp_disp, pclk, mode->flags);
 
 end:
 	if (!secdp_check_supported_resolution(mode, ret == MODE_OK))
