@@ -71,6 +71,7 @@
 #include "audit.h"
 
 int selinux_android_netlink_route;
+int selinux_android_netlink_getneigh;
 int selinux_policycap_netpeer;
 int selinux_policycap_openperm;
 int selinux_policycap_alwaysnetwork;
@@ -2013,6 +2014,7 @@ static void security_load_policycaps(void)
 						  POLICYDB_CAPABILITY_ALWAYSNETWORK);
 
 	selinux_android_netlink_route = policydb.android_netlink_route;
+	selinux_android_netlink_getneigh = policydb.android_netlink_getneigh;
 	selinux_nlmsg_init();
 }
 
@@ -2646,8 +2648,12 @@ err:
 	if (*names) {
 		for (i = 0; i < *len; i++)
 			kfree((*names)[i]);
+		kfree(*names);
 	}
 	kfree(*values);
+	*len = 0;
+	*names = NULL;
+	*values = NULL;
 	goto out;
 }
 
