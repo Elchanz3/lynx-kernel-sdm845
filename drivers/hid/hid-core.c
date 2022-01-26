@@ -1109,6 +1109,9 @@ EXPORT_SYMBOL_GPL(hid_open_report);
 
 static s32 snto32(__u32 value, unsigned n)
 {
+	if (!value || !n)
+		return 0;
+
 	switch (n) {
 	case 8:  return ((__s8)value);
 	case 16: return ((__s16)value);
@@ -1407,6 +1410,17 @@ static void hid_output_field(const struct hid_device *hid,
 }
  
  /*
+ * Compute the size of a report.
+ */
+static size_t hid_compute_report_size(struct hid_report *report)
+{
+	if (report->size)
+		return ((report->size - 1) >> 3) + 1;
+
+	return 0;
+}
+
+/*
  * Compute the size of a report.
  */
 static size_t hid_compute_report_size(struct hid_report *report)
@@ -1800,6 +1814,9 @@ int hid_connect(struct hid_device *hdev, unsigned int connect_mask)
 		break;
 	case BUS_I2C:
 		bus = "I2C";
+		break;
+	case BUS_VIRTUAL:
+		bus = "VIRTUAL";
 		break;
 	default:
 		bus = "<UNKNOWN>";
