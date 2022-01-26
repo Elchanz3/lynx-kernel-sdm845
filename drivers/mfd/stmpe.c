@@ -863,8 +863,9 @@ static irqreturn_t stmpe_irq(int irq, void *data)
 	int ret;
 	int i;
 
-	if (variant->id_val == STMPE801_ID) {
-		int base = irq_create_mapping(stmpe->domain, 0);
+	if (variant->id_val == STMPE801_ID ||
+	    variant->id_val == STMPE1600_ID) {
+		int base = irq_find_mapping(stmpe->domain, 0);
 
 		handle_nested_irq(base);
 		return IRQ_HANDLED;

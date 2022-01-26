@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -352,7 +352,6 @@ struct fastrpc_mmap {
 	int uncached;
 	int secure;
 	uintptr_t attr;
-	bool is_filemap; /*flag to indicate map used in process init*/
 };
 
 enum fastrpc_perfkeys {
@@ -408,7 +407,6 @@ struct fastrpc_file {
 	struct mutex perf_mutex;
 	struct pm_qos_request pm_qos_req;
 	int qos_request;
-	struct mutex pm_qos_mutex;
 	struct mutex map_mutex;
 	struct mutex fl_map_mutex;
 	int refcount;
@@ -520,7 +518,7 @@ bail:
 static void fastrpc_buf_free(struct fastrpc_buf *buf, int cache)
 {
 	struct fastrpc_file *fl = buf == NULL ? NULL : buf->fl;
-	int vmid, err = 0;
+	int vmid;
 
 	if (!fl)
 		return;
@@ -541,9 +539,6 @@ static void fastrpc_buf_free(struct fastrpc_buf *buf, int cache)
 		int destVM[1] = {VMID_HLOS};
 		int destVMperm[1] = {PERM_READ | PERM_WRITE | PERM_EXEC};
 
-		VERIFY(err, fl->sctx != NULL);
-		if (err)
-			goto bail;
 		if (fl->sctx->smmu.cb)
 			buf->phys &= ~((uint64_t)fl->sctx->smmu.cb << 32);
 		vmid = fl->apps->channel[fl->cid].vmid;
@@ -556,7 +551,6 @@ static void fastrpc_buf_free(struct fastrpc_buf *buf, int cache)
 		dma_free_attrs(fl->sctx->smmu.dev, buf->size, buf->virt,
 					buf->phys, buf->dma_attr);
 	}
-bail:
 	kfree(buf);
 }
 
@@ -702,10 +696,9 @@ static int fastrpc_mmap_remove(struct fastrpc_file *fl, uintptr_t va,
 
 	spin_lock(&me->hlock);
 	hlist_for_each_entry_safe(map, n, &me->maps, hn) {
-		if (map->refs == 1 && map->raddr == va &&
+		if (map->raddr == va &&
 			map->raddr + map->len == va + len &&
-			/*Remove map if not used in process initialization*/
-			!map->is_filemap) {
+			map->refs == 1) {
 			match = map;
 			hlist_del_init(&map->hn);
 			break;
@@ -717,10 +710,9 @@ static int fastrpc_mmap_remove(struct fastrpc_file *fl, uintptr_t va,
 		return 0;
 	}
 	hlist_for_each_entry_safe(map, n, &fl->maps, hn) {
-		if (map->refs == 1 && map->raddr == va &&
+		if (map->raddr == va &&
 			map->raddr + map->len == va + len &&
-			/*Remove map if not used in process initialization*/
-			!map->is_filemap) {
+			map->refs == 1) {
 			match = map;
 			hlist_del_init(&map->hn);
 			break;
@@ -860,7 +852,6 @@ static int fastrpc_mmap_create(struct fastrpc_file *fl, int fd,
 	map->fl = fl;
 	map->fd = fd;
 	map->attr = attr;
-	map->is_filemap = false;
 	if (mflags == ADSP_MMAP_HEAP_ADDR ||
 				mflags == ADSP_MMAP_REMOTE_HEAP_ADDR) {
 		unsigned long dma_attrs = DMA_ATTR_SKIP_ZEROING |
@@ -1055,11 +1046,6 @@ static int fastrpc_buf_alloc(struct fastrpc_file *fl, size_t size,
 	buf->flags = rflags;
 	buf->raddr = 0;
 	buf->remote = 0;
-	VERIFY(err, fl && fl->sctx != NULL);
-	if (err) {
-		err = -EBADR;
-		goto bail;
-	}
 	buf->virt = dma_alloc_attrs(fl->sctx->smmu.dev, buf->size,
 				       (dma_addr_t *)&buf->phys,
 					   GFP_KERNEL, buf->dma_attr);
@@ -1721,7 +1707,7 @@ static int get_args(uint32_t kernel, struct smq_invoke_ctx *ctx)
 
 		if (map && map->uncached)
 			continue;
-		if (ctx->fl->sctx && ctx->fl->sctx->smmu.coherent &&
+		if (ctx->fl->sctx->smmu.coherent &&
 			!(map && (map->attr & FASTRPC_ATTR_NON_COHERENT)))
 			continue;
 		if (map && (map->attr & FASTRPC_ATTR_COHERENT))
@@ -1829,7 +1815,7 @@ static void inv_args_pre(struct smq_invoke_ctx *ctx)
 			continue;
 		if (!rpra[i].buf.len)
 			continue;
-		if (ctx->fl && ctx->fl->sctx && ctx->fl->sctx->smmu.coherent &&
+		if (ctx->fl->sctx->smmu.coherent &&
 			!(map && (map->attr & FASTRPC_ATTR_NON_COHERENT)))
 			continue;
 		if (map && (map->attr & FASTRPC_ATTR_COHERENT))
@@ -1883,7 +1869,7 @@ static void inv_args(struct smq_invoke_ctx *ctx)
 			continue;
 		if (!rpra[i].buf.len)
 			continue;
-		if (ctx->fl && ctx->fl->sctx && ctx->fl->sctx->smmu.coherent &&
+		if (ctx->fl->sctx->smmu.coherent &&
 			!(map && (map->attr & FASTRPC_ATTR_NON_COHERENT)))
 			continue;
 		if (map && (map->attr & FASTRPC_ATTR_COHERENT))
@@ -2246,8 +2232,6 @@ static int fastrpc_init_process(struct fastrpc_file *fl,
 			mutex_lock(&fl->fl_map_mutex);
 			VERIFY(err, !fastrpc_mmap_create(fl, init->filefd, 0,
 				init->file, init->filelen, mflags, &file));
-			if (file)
-				file->is_filemap = true;
 			mutex_unlock(&fl->fl_map_mutex);
 			if (err)
 				goto bail;
@@ -2430,9 +2414,6 @@ static int fastrpc_release_current_dsp_process(struct fastrpc_file *fl)
 	int tgid = 0;
 
 	VERIFY(err, fl->cid >= 0 && fl->cid < NUM_CHANNELS);
-	if (err)
-		goto bail;
-	VERIFY(err, fl->sctx != NULL);
 	if (err)
 		goto bail;
 	VERIFY(err, fl->apps->channel[fl->cid].chan != NULL);
@@ -2774,13 +2755,8 @@ static int fastrpc_internal_munmap(struct fastrpc_file *fl,
 	mutex_unlock(&fl->fl_map_mutex);
 	if (err)
 		goto bail;
-	VERIFY(err, map != NULL);
-	if (err) {
-		err = -EINVAL;
-		goto bail;
-	}
 	VERIFY(err, !fastrpc_munmap_on_dsp(fl, map->raddr,
-			map->phys, map->size, map->flags));
+				map->phys, map->size, map->flags));
 	if (err)
 		goto bail;
 	mutex_lock(&fl->fl_map_mutex);
@@ -3115,7 +3091,6 @@ static int fastrpc_file_free(struct fastrpc_file *fl)
 	mutex_destroy(&fl->perf_mutex);
 	mutex_destroy(&fl->fl_map_mutex);
 	mutex_destroy(&fl->map_mutex);
-	mutex_destroy(&fl->pm_qos_mutex);
 	kfree(fl);
 	return 0;
 }
@@ -3619,7 +3594,6 @@ static int fastrpc_device_open(struct inode *inode, struct file *filp)
 	hlist_add_head(&fl->hn, &me->drivers);
 	spin_unlock(&me->hlock);
 	mutex_init(&fl->perf_mutex);
-	mutex_init(&fl->pm_qos_mutex);
 	return 0;
 }
 
@@ -3627,26 +3601,22 @@ static int fastrpc_set_process_info(struct fastrpc_file *fl)
 {
 	int err = 0, buf_size = 0;
 	char strpid[PID_SIZE];
-	char cur_comm[TASK_COMM_LEN];
 
-	memcpy(cur_comm, current->comm, TASK_COMM_LEN);
-	cur_comm[TASK_COMM_LEN-1] = '\0';
 	fl->tgid = current->tgid;
 	snprintf(strpid, PID_SIZE, "%d", current->pid);
-	buf_size = strlen(cur_comm) + strlen("_") + strlen(strpid) + 1;
+	buf_size = strlen(current->comm) + strlen("_") + strlen(strpid) + 1;
 	fl->debug_buf = kzalloc(buf_size, GFP_KERNEL);
 	if (!fl->debug_buf) {
 		err = -ENOMEM;
 		return err;
 	}
-	snprintf(fl->debug_buf, buf_size, "%.10s%s%d",
-			cur_comm, "_", current->pid);
+	snprintf(fl->debug_buf, UL_SIZE, "%.10s%s%d",
+			current->comm, "_", current->pid);
 	fl->debugfs_file = debugfs_create_file(fl->debug_buf, 0644,
 					debugfs_root, fl, &debugfs_fops);
 	if (!fl->debugfs_file)
 		pr_warn("Error: %s: %s: failed to create debugfs file %s\n",
-				cur_comm, __func__, fl->debug_buf);
-
+				current->comm, __func__, fl->debug_buf);
 	return err;
 }
 
@@ -3692,10 +3662,8 @@ static int fastrpc_get_info(struct fastrpc_file *fl, uint32_t *info)
 			goto bail;
 	}
 	VERIFY(err, fl->sctx != NULL);
-	if (err) {
-		err = -EBADR;
+	if (err)
 		goto bail;
-	}
 	*info = (fl->sctx->smmu.enabled ? 1 : 0);
 bail:
 	return err;
@@ -3722,14 +3690,12 @@ static int fastrpc_internal_control(struct fastrpc_file *fl,
 		VERIFY(err, latency != 0);
 		if (err)
 			goto bail;
-		mutex_lock(&fl->pm_qos_mutex);
 		if (!fl->qos_request) {
 			pm_qos_add_request(&fl->pm_qos_req,
 				PM_QOS_CPU_DMA_LATENCY, latency);
 			fl->qos_request = 1;
 		} else
 			pm_qos_update_request(&fl->pm_qos_req, latency);
-		mutex_unlock(&fl->pm_qos_mutex);
 		break;
 	case FASTRPC_CONTROL_SMMU:
 		if (!me->legacy)
@@ -3769,11 +3735,6 @@ static long fastrpc_device_ioctl(struct file *file, unsigned int ioctl_num,
 	int size = 0, err = 0;
 	uint32_t info;
 
-	VERIFY(err, fl != NULL);
-	if (err) {
-		err = -EBADR;
-		goto bail;
-	}
 	p.inv.fds = NULL;
 	p.inv.attrs = NULL;
 	p.inv.crc = NULL;

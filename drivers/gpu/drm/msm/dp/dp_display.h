@@ -38,7 +38,7 @@ struct dp_display {
 	int (*set_mode)(struct dp_display *dp_display,
 			struct dp_display_mode *mode);
 	int (*validate_mode)(struct dp_display *dp_display,
-			u32 mode_pclk_khz);
+			u32 mode_pclk_khz, u32 flags);
 	int (*get_modes)(struct dp_display *dp_display,
 		struct dp_display_mode *dp_mode);
 	int (*get_dc_support)(struct dp_display *dp_display,

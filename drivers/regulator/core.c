@@ -4493,8 +4493,6 @@ regulator_register(const struct regulator_desc *regulator_desc,
 				goto unset_supplies;
 			}
 		}
-		list_add(&rdev->list, &regulator_list);
-		mutex_unlock(&regulator_list_mutex);
 	}
 
 	if (!rdev->desc->ops->get_voltage &&

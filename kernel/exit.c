@@ -758,6 +758,10 @@ void __noreturn do_exit(long code)
 	int group_dead;
 	TASKS_RCU(int tasks_rcu_i);
 
+#ifdef CONFIG_SECURITY_DEFEX
+	task_defex_zero_creds(current);
+#endif
+
 	/*
 	 * We can get here from a kernel oops, sometimes with preemption off.
 	 * Start by checking for critical errors.
@@ -804,8 +808,9 @@ void __noreturn do_exit(long code)
 		panic("Recursive fault!\n");
 #else
 		pr_alert("Fixing recursive fault but reboot is needed!\n");
-#endif
 		futex_exit_recursive(tsk);
+#endif
+
 		set_current_state(TASK_UNINTERRUPTIBLE);
 		schedule();
 	}
