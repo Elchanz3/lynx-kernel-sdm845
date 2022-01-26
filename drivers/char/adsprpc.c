@@ -3755,6 +3755,11 @@ static long fastrpc_device_ioctl(struct file *file, unsigned int ioctl_num,
 	int size = 0, err = 0;
 	uint32_t info;
 
+	VERIFY(err, fl != NULL);
+	if (err) {
+		err = -EBADR;
+		goto bail;
+	}
 	p.inv.fds = NULL;
 	p.inv.attrs = NULL;
 	p.inv.crc = NULL;
