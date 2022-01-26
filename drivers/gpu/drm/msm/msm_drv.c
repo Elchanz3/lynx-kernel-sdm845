@@ -76,6 +76,7 @@ int __msm_drm_notifier_call_chain(unsigned long event, void *data)
 	return blocking_notifier_call_chain(&msm_drm_notifier_list,
 					event, data);
 }
+static DEFINE_MUTEX(msm_release_lock);
 
 static void msm_fb_output_poll_changed(struct drm_device *dev)
 {
@@ -1447,7 +1448,7 @@ void msm_mode_object_event_notify(struct drm_mode_object *obj,
 
 static int msm_release(struct inode *inode, struct file *filp)
 {
-	struct drm_file *file_priv;
+	struct drm_file *file_priv = filp->private_data;
 	struct drm_minor *minor;
 	struct drm_device *dev;
 	struct msm_drm_private *priv;
@@ -1459,7 +1460,6 @@ static int msm_release(struct inode *inode, struct file *filp)
 
 	mutex_lock(&msm_release_lock);
 
-	file_priv = filp->private_data;
 	if (!file_priv) {
 		ret = -EINVAL;
 		goto end;

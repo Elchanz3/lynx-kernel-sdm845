@@ -3521,9 +3521,6 @@ int usb_port_resume(struct usb_device *udev, pm_message_t msg)
 		 * sequence.
 		 */
 		status = hub_port_status(hub, port1, &portstatus, &portchange);
-
-		/* TRSMRCY = 10 msec */
-		usleep_range(10000, 10500);
 	}
 
  SuspendCleared:
@@ -4879,6 +4876,7 @@ static void hub_port_connect(struct usb_hub *hub, int port1, u16 portstatus,
 		"port %d, status %04x, change %04x, %s\n",
 		port1, portstatus, portchange, portspeed(hub, portstatus));
 #endif
+	bool retry_locked;
 
 	/* Disconnect any existing devices under this port */
 	if (udev) {
@@ -4976,12 +4974,9 @@ retry_enum:
 		if (status < 0)
 			goto loop;
 
-		dev_speed = udev->speed;
-		if (udev->speed > USB_SPEED_UNKNOWN &&
-				udev->speed <= USB_SPEED_HIGH && hcd->usb_phy
-				&& hcd->usb_phy->disable_chirp)
-			hcd->usb_phy->disable_chirp(hcd->usb_phy,
-					false);
+		mutex_unlock(hcd->address0_mutex);
+		usb_unlock_port(port_dev);
+		retry_locked = false;
 
 		if (udev->quirks & USB_QUIRK_DELAY_INIT)
 			msleep(2000);
